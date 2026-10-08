@@ -1,0 +1,414 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ================================
+   Recently Added Continuous Marquee
+   ================================ */
+
+.recently-added-marquee {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.recently-added-marquee::before,
+.recently-added-marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.recently-added-marquee::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    #fcfcfa 0%,
+    rgba(252, 252, 250, 0) 100%
+  );
+}
+
+.recently-added-marquee::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    #fcfcfa 0%,
+    rgba(252, 252, 250, 0) 100%
+  );
+}
+
+.recently-added-marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  animation: recently-added-marquee 70s linear infinite;
+}
+
+.recently-added-marquee-copy {
+  display: flex;
+  flex-shrink: 0;
+  gap: 16px;
+  padding-right: 16px;
+}
+
+.recently-added-card {
+  width: 220px;
+  flex: 0 0 220px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #E8E8E2;
+  background: white;
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.recently-added-card:hover {
+  transform: translateY(-4px);
+  border-color: #D5D5CC;
+  box-shadow: 0 16px 40px rgba(60, 60, 45, 0.09);
+}
+
+.recently-added-marquee-paused .recently-added-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes recently-added-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (min-width: 641px) {
+  .recently-added-marquee-copy {
+    gap: 20px;
+    padding-right: 20px;
+  }
+
+  .recently-added-card {
+    width: calc((100vw - 100px) / 6);
+    flex-basis: calc((100vw - 100px) / 6);
+    max-width: 340px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recently-added-marquee-copy {
+    gap: 24px;
+    padding-right: 24px;
+  }
+
+  .recently-added-card {
+    width: calc((100vw - 120px) / 6);
+    flex-basis: calc((100vw - 120px) / 6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recently-added-marquee-track {
+    animation-duration: 70s;
+  }
+}
+
+/* ================================
+   Collection Continuous Marquee
+   ================================ */
+
+.collection-marquee {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.collection-marquee::before,
+.collection-marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.collection-marquee::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    #fcfcfa 0%,
+    rgba(252, 252, 250, 0) 100%
+  );
+}
+
+.collection-marquee::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    #fcfcfa 0%,
+    rgba(252, 252, 250, 0) 100%
+  );
+}
+
+.collection-marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.collection-marquee-copy {
+  display: flex;
+  flex-shrink: 0;
+  gap: 16px;
+  padding-right: 16px;
+}
+
+.collection-card {
+  width: 220px;
+  flex: 0 0 220px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #E8E8E2;
+  background: white;
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.collection-card:hover {
+  transform: translateY(-4px);
+  border-color: #D5D5CC;
+  box-shadow: 0 16px 40px rgba(60, 60, 45, 0.09);
+}
+
+.collection-marquee-left {
+  animation: collection-marquee-left 65s linear infinite;
+}
+
+.collection-marquee-right {
+  animation: collection-marquee-right 65s linear infinite;
+}
+
+.collection-marquee-paused .collection-marquee-left,
+.collection-marquee-paused .collection-marquee-right {
+  animation-play-state: paused;
+}
+
+@keyframes collection-marquee-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes collection-marquee-right {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (min-width: 641px) {
+  .collection-marquee-copy {
+    gap: 20px;
+    padding-right: 20px;
+  }
+
+  .collection-card {
+    width: calc((100vw - 100px) / 6);
+    flex-basis: calc((100vw - 100px) / 6);
+    max-width: 340px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .collection-marquee-copy {
+    gap: 24px;
+    padding-right: 24px;
+  }
+
+  .collection-card {
+    width: calc((100vw - 120px) / 6);
+    flex-basis: calc((100vw - 120px) / 6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-marquee-left,
+  .collection-marquee-right {
+    animation-duration: 65s;
+  }
+}
+
+
+/* =====================================================
+   HOME PAGE — Landing-style carousels
+   Intentionally separate from landing page CSS
+   ===================================================== */
+
+.home-landing-marquee {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.home-landing-marquee::before,
+.home-landing-marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.home-landing-marquee::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    #fcfcfa 0%,
+    rgba(252, 252, 250, 0) 100%
+  );
+}
+
+.home-landing-marquee::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    #fcfcfa 0%,
+    rgba(252, 252, 250, 0) 100%
+  );
+}
+
+.home-landing-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  animation: home-landing-marquee-left 70s linear infinite;
+}
+
+.home-collections-track {
+  animation-duration: 65s;
+}
+
+.home-landing-copy {
+  display: flex;
+  flex-shrink: 0;
+  gap: 16px;
+  padding-right: 16px;
+}
+
+.home-landing-card {
+  width: 220px;
+  flex: 0 0 220px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #E8E8E2;
+  background: white;
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.home-landing-card:hover {
+  transform: translateY(-4px);
+  border-color: #D5D5CC;
+  box-shadow: 0 16px 40px rgba(60, 60, 45, 0.09);
+}
+
+.home-landing-paused .home-landing-track {
+  animation-play-state: paused;
+}
+
+@keyframes home-landing-marquee-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (min-width: 641px) {
+  .home-landing-copy {
+    gap: 20px;
+    padding-right: 20px;
+  }
+
+  .home-landing-card {
+    width: calc((100vw - 100px) / 4);
+    flex-basis: calc((100vw - 100px) / 4);
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-landing-copy {
+    gap: 24px;
+    padding-right: 24px;
+  }
+
+  .home-landing-card {
+    width: calc((100vw - 120px) / 4);
+    flex-basis: calc((100vw - 120px) / 4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-landing-track {
+    animation-duration: 70s;
+  }
+}
