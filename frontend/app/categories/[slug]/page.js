@@ -71,7 +71,7 @@ export default function CategoryPage({ params }) {
         <p className="text-stone-600">{error}</p>
 
         <Link
-          href="/"
+          href="/home"
           className="mt-5 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white"
         >
           Back to store
@@ -85,7 +85,7 @@ export default function CategoryPage({ params }) {
       <header className="border-b border-stone-200 bg-stone-50">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <Link
-            href="/"
+            href="/home"
             className="flex items-center gap-2 text-sm font-medium text-stone-600"
           >
             <ArrowLeft size={18} />
@@ -146,14 +146,14 @@ export default function CategoryPage({ params }) {
                   <Link
                     href={`/products/${product._id}`}
                     key={product._id}
-                    className="group overflow-hidden rounded-2xl border border-stone-200 bg-white transition hover:-translate-y-1 hover:shadow-md"
+                    className="group overflow-hidden rounded-2xl border border-stone-200 bg-white"
                   >
                     <div className="flex aspect-square items-center justify-center overflow-hidden bg-stone-100 text-6xl">
                       {product.images?.length > 0 ? (
                         <img
                           src={product.images[0]}
                           alt={product.name}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
                         "🍽️"

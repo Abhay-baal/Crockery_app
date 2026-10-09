@@ -65,6 +65,8 @@ const productSchema = new mongoose.Schema(
       default: true,
     },
 
+    isPinned: { type: Boolean, default: false },
+
     isRecentlyAdded: {
       type: Boolean,
       default: false,

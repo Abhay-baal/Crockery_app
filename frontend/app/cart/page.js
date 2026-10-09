@@ -24,7 +24,7 @@ export default function CartPage() {
         <header className="border-b border-stone-200 bg-stone-50">
           <div className="mx-auto flex h-16 max-w-6xl items-center px-5">
             <Link
-              href="/"
+              href="/home"
               className="flex items-center gap-2 text-sm font-medium text-stone-600"
             >
               <ArrowLeft size={18} />
@@ -47,7 +47,7 @@ export default function CartPage() {
           </p>
 
           <Link
-            href="/"
+            href="/home"
             className="mt-7 rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white"
           >
             Start shopping
@@ -62,7 +62,7 @@ export default function CartPage() {
       <header className="border-b border-stone-200 bg-stone-50">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-5">
           <Link
-            href="/"
+              href="/home"
             className="flex items-center gap-2 text-sm font-medium text-stone-600"
           >
             <ArrowLeft size={18} />

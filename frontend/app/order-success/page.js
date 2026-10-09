@@ -33,7 +33,7 @@ export default function OrderSuccessPage() {
           </p>
 
           <Link
-            href="/"
+          href="/home"
             className="mt-6 inline-flex rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white"
           >
             Back to store
@@ -77,7 +77,7 @@ export default function OrderSuccessPage() {
           </div>
 
           <Link
-            href="/"
+            href="/home"
             className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 px-6 py-4 text-sm font-semibold text-white transition hover:bg-stone-700"
           >
             <ShoppingBag size={18} />

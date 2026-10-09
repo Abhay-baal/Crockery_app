@@ -19,7 +19,7 @@ export default function ProductCard({ product }) {
             <img
               src={image}
               alt={product.name || "Product"}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+              className="h-full w-full object-cover"
             />
           ) : (
             <ShoppingBag

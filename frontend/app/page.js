@@ -13,10 +13,12 @@ import {
 import api from "../services/api";
 import ProductCard from "../components/ProductCard";
 import AppHeader from "../components/AppHeader";
+import DraggableMarquee from "../components/DraggableMarquee";
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [heroSettings, setHeroSettings] = useState(null);
   const [recentlyAdded, setRecentlyAdded] = useState([]);
   const [isCollectionsPaused, setIsCollectionsPaused] = useState(false);
   const [isRecentlyAddedPaused, setIsRecentlyAddedPaused] = useState(false);
@@ -24,6 +26,8 @@ export default function HomePage() {
   useEffect(() => {
     async function loadHome() {
       try {
+        const heroResponse = await api.get("/admin/hero");
+        setHeroSettings(heroResponse.data?.settings || null);
         const [
           productsResponse,
           categoriesResponse,
@@ -95,15 +99,11 @@ export default function HomePage() {
               </div>
 
               <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight text-gray-950 sm:text-5xl lg:text-6xl">
-                Beautiful essentials
-                <br />
-                for every kitchen.
+                {heroSettings?.heroTitle || "Beautiful essentials for every kitchen."}
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-gray-500 sm:text-lg">
-                Discover quality bartan, crockery and everyday kitchen
-                essentials at Magotra Bartan Store — bringing practical
-                products and timeless style to your home.
+                {heroSettings?.heroDescription || "Discover quality bartan, crockery and everyday kitchen essentials at Magotra Bartan Store — bringing practical products and timeless style to your home."}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -111,7 +111,7 @@ export default function HomePage() {
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#70765F] px-6 py-3.5 text-sm font-medium text-white transition hover:bg-[#5F654F]"
                 >
-                  Shop products
+                  {heroSettings?.primaryButton || "Shop products"}
                   <ArrowRight size={16} />
                 </Link>
 
@@ -119,7 +119,7 @@ export default function HomePage() {
                   href="/categories"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#DCDCD4] bg-white px-6 py-3.5 text-sm font-medium text-gray-800 transition hover:bg-[#F5F5F0]"
                 >
-                  Explore collections
+                  {heroSettings?.secondaryButton || "Explore collections"}
                 </Link>
               </div>
             </div>
@@ -128,48 +128,13 @@ export default function HomePage() {
             <div className="relative">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[32px] border border-[#E5E5DE] bg-[#F3F3EE]">
 
-                {/* Temporary SVG Placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 500 380"
-                    className="h-full w-full p-12 text-[#B4B7A8]"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect
-                      x="90"
-                      y="100"
-                      width="320"
-                      height="190"
-                      rx="28"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    />
-
-                    <path
-                      d="M135 245L205 175L260 225L310 165L365 245"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-
-                    <circle
-                      cx="205"
-                      cy="155"
-                      r="18"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    />
-
-                    <path
-                      d="M155 315H345"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
+                {heroSettings?.heroImage ? (
+                  <img src={heroSettings.heroImage} alt="Magotra Bartan Store kitchen essentials" className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <ShoppingBag size={64} strokeWidth={1.1} className="text-[#B4B7A8]" />
+                  </div>
+                )}
 
                 <div className="absolute bottom-5 left-5 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-xs font-medium text-[#70765F] backdrop-blur-sm">
                   Magotra Bartan Store
@@ -231,14 +196,18 @@ export default function HomePage() {
                   : ""
               }`}
             >
-              <div
-                className="recently-added-marquee-track"
-                style={{
-                  animationPlayState: isRecentlyAddedPaused
-                    ? "paused"
-                    : "running",
-                }}
+              <DraggableMarquee
+                trackSelector=".recently-added-marquee-track"
+                isPaused={isRecentlyAddedPaused}
               >
+                <div
+                  className="recently-added-marquee-track"
+                  style={{
+                    animationPlayState: isRecentlyAddedPaused
+                      ? "paused"
+                      : "running",
+                  }}
+                >
                 {[0, 1].map((copy) => (
                   <div
                     key={`recently-added-copy-${copy}`}
@@ -309,7 +278,8 @@ export default function HomePage() {
                     })}
                   </div>
                 ))}
-              </div>
+                </div>
+              </DraggableMarquee>
             </div>
           </section>
         )}
@@ -399,18 +369,22 @@ export default function HomePage() {
                       key={`collection-row-${rowIndex}`}
                       className="collection-marquee"
                     >
-                      <div
-                        className={`collection-marquee-track ${
-                          movingRight
-                            ? "collection-marquee-right"
-                            : "collection-marquee-left"
-                        }`}
-                        style={{
-                          animationPlayState: isCollectionsPaused
-                            ? "paused"
-                            : "running",
-                        }}
+                      <DraggableMarquee
+                        trackSelector=".collection-marquee-track"
+                        isPaused={isCollectionsPaused}
                       >
+                        <div
+                          className={`collection-marquee-track ${
+                            movingRight
+                              ? "collection-marquee-right"
+                              : "collection-marquee-left"
+                          }`}
+                          style={{
+                            animationPlayState: isCollectionsPaused
+                              ? "paused"
+                              : "running",
+                          }}
+                        >
                         {[0, 1].map((copy) => (
                           <div
                             key={`collection-copy-${rowIndex}-${copy}`}
@@ -476,7 +450,8 @@ export default function HomePage() {
                             })}
                           </div>
                         ))}
-                      </div>
+                        </div>
+                      </DraggableMarquee>
                     </div>
                   );
                 }

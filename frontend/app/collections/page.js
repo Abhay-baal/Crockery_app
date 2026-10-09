@@ -98,7 +98,7 @@ export default function CollectionsPage() {
               <Link
                 key={category._id}
                 href={`/categories/${category.slug}`}
-                className="group overflow-hidden rounded-3xl border border-[#E8E8E2] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                className="group overflow-hidden rounded-3xl border border-[#E8E8E2] bg-white"
               >
                 {/* EXACT CAROUSEL IMAGE AREA */}
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F3F3EE]">
@@ -106,7 +106,7 @@ export default function CollectionsPage() {
                     <img
                       src={category.image}
                       alt={category.name || "Collection"}
-                      className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">

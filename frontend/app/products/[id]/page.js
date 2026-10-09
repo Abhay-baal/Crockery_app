@@ -56,7 +56,7 @@ export default function ProductPage({ params }) {
         <p className="text-stone-600">{error || "Product not found."}</p>
 
         <Link
-          href="/"
+          href="/home"
           className="mt-5 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white"
         >
           Back to store
@@ -74,7 +74,7 @@ export default function ProductPage({ params }) {
       <header className="border-b border-stone-200 bg-stone-50">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <Link
-            href="/"
+            href="/home"
             className="flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900"
           >
             <ArrowLeft size={18} />

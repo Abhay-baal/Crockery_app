@@ -1,5 +1,7 @@
 "use client";
 
+import api from "../../services/api";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, Lock } from "lucide-react";
@@ -60,7 +62,7 @@ export default function CheckoutPage() {
     });
   };
 
-  const handlePlaceOrder = (event) => {
+  const handlePlaceOrder = async (event) => {
     event.preventDefault();
 
     setLoading(true);
@@ -75,6 +77,14 @@ export default function CheckoutPage() {
       paymentStatus: "Pending",
       createdAt: new Date().toISOString(),
     };
+
+    try {
+      await api.post("/orders", order);
+    } catch (error) {
+      console.error("Order save failed:", error);
+      window.alert("Your order could not be saved. Please check your connection and try again.");
+      return;
+    }
 
     localStorage.setItem(
       "last-order",
@@ -112,7 +122,7 @@ export default function CheckoutPage() {
         </p>
 
         <Link
-          href="/"
+          href="/home"
           className="mt-6 rounded-full bg-stone-900 px-6 py-3 text-sm font-semibold text-white"
         >
           Continue shopping

@@ -1,14 +1,28 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 
+const subscribe = () => () => {};
+const getHomeHref = () =>
+  typeof window !== "undefined" && localStorage.getItem("token")
+    ? "/home"
+    : "/";
+const getServerHomeHref = () => "/";
+
 export default function AppHeader() {
+  const homeHref = useSyncExternalStore(
+    subscribe,
+    getHomeHref,
+    getServerHomeHref
+  );
+
   return (
     <header className="border-b border-[#E8E8E2] bg-[#FCFCFA]">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:px-8">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
+        <Link href={homeHref} className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#70765F] text-sm font-semibold text-white">
             M
           </div>

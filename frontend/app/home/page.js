@@ -13,6 +13,7 @@ import api from "../../services/api";
 import BottomNav from "../../components/BottomNav";
 import SearchBar from "../../components/SearchBar";
 import ProductCard from "../../components/ProductCard";
+import DraggableMarquee from "../../components/DraggableMarquee";
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
@@ -166,8 +167,12 @@ export default function HomePage() {
               onMouseEnter={() => setRecentHovered(true)}
               onMouseLeave={() => setRecentHovered(false)}
             >
-              <div className="home-carousel-track home-recent-track">
-                {[0, 1].map((copy) => (
+              <DraggableMarquee
+                trackSelector=".home-recent-track"
+                isPaused={recentPaused || recentHovered}
+              >
+                <div className="home-carousel-track home-recent-track">
+                  {[0, 1].map((copy) => (
                   <div
                     key={`recent-copy-${copy}`}
                     className="home-carousel-copy"
@@ -181,8 +186,9 @@ export default function HomePage() {
                       />
                     ))}
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </DraggableMarquee>
             </div>
           )}
         </section>
@@ -291,14 +297,14 @@ function HomeRecentCard({ product, index }) {
   return (
     <Link
       href={`/products/${product._id}`}
-      className="home-carousel-card group block"
+      className="home-carousel-card block"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F3F3EE]">
         {image ? (
           <img
             src={image}
             alt={product.name || "Product"}
-            className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -314,11 +320,8 @@ function HomeRecentCard({ product, index }) {
           New {String(index + 1).padStart(2, "0")}
         </span>
 
-        <span className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#70765F] shadow-sm transition duration-300 group-hover:bg-[#70765F] group-hover:text-white">
-          <ArrowRight
-            size={17}
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-          />
+        <span className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#70765F] shadow-sm">
+          <ArrowRight size={17} />
         </span>
       </div>
 
@@ -355,14 +358,14 @@ function HomeCollectionCard({ category, index }) {
   return (
     <Link
       href={`/categories/${category.slug}`}
-      className="home-carousel-card group block"
+      className="home-carousel-card block"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F3F3EE]">
         {image ? (
           <img
             src={image}
             alt={category.name || "Collection"}
-            className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -378,11 +381,8 @@ function HomeCollectionCard({ category, index }) {
           Collection {String(index + 1).padStart(2, "0")}
         </span>
 
-        <span className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#70765F] shadow-sm transition duration-300 group-hover:bg-[#70765F] group-hover:text-white">
-          <ArrowRight
-            size={17}
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-          />
+        <span className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#70765F] shadow-sm">
+          <ArrowRight size={17} />
         </span>
       </div>
 

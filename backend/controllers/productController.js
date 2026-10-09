@@ -15,6 +15,7 @@ const createProduct = async (req, res) => {
       sku,
       isAvailable,
       isRecentlyAdded,
+      isPinned,
     } = req.body;
 
     if (!name || !slug || !category || mrp === undefined || price === undefined) {
@@ -66,6 +67,8 @@ const createProduct = async (req, res) => {
       sku: sku ? sku.trim() : undefined,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isRecentlyAdded: isRecentlyAdded === true,
+      isPinned: isPinned === true,
+      isPinned: isPinned === true,
       recentlyAddedAt: isRecentlyAdded === true ? new Date() : null,
     });
 
@@ -154,6 +157,7 @@ const updateProduct = async (req, res) => {
       sku,
       isAvailable,
       isRecentlyAdded,
+      isPinned,
     } = req.body;
 
     const product = await Product.findById(id);
@@ -219,6 +223,10 @@ const updateProduct = async (req, res) => {
 
     if (isAvailable !== undefined) {
       product.isAvailable = isAvailable;
+    }
+
+    if (isPinned !== undefined) {
+      product.isPinned = isPinned === true;
     }
 
     if (isRecentlyAdded !== undefined) {
