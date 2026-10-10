@@ -8,6 +8,7 @@ import api from "../../services/api";
 import BottomNav from "../../components/BottomNav";
 import SearchBar from "../../components/SearchBar";
 
+import PageShortcuts from "../../components/PageShortcuts";
 export default function CollectionsPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,14 +44,12 @@ export default function CollectionsPage() {
             Discover
           </p>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
-            Collections
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Collections</h1>
+            <PageShortcuts />
+          </div>
 
-          <p className="mt-2 max-w-md text-sm leading-6 text-gray-400">
-            Explore our crockery collections, thoughtfully selected
-            for everyday living and special occasions.
-          </p>
+
 
           <div className="mt-5 max-w-xl">
             <Suspense
@@ -65,7 +64,7 @@ export default function CollectionsPage() {
 
         {/* Collection Cards */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
               <div
                 key={item}
@@ -93,7 +92,7 @@ export default function CollectionsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {categories.map((category, categoryIndex) => (
               <Link
                 key={category._id}

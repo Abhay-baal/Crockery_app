@@ -1,5 +1,28 @@
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+const { cleanupUnusedCloudinaryImages } = require("../utils/cloudinaryImages");
+
+function alignImageAssets(images, imagePublicIds, previousImages = [], previousIds = []) {
+  const previousByUrl = new Map(
+    previousImages.map((url, index) => [url, previousIds[index] || ""])
+  );
+  const previousIdToUrl = new Map(
+    previousImages.map((url, index) => [previousIds[index], url])
+  );
+
+  return (Array.isArray(images) ? images : []).map((url, index) => {
+    const requestedId = Array.isArray(imagePublicIds)
+      ? imagePublicIds[index] || ""
+      : "";
+    const requestedIdUrl = requestedId ? previousIdToUrl.get(requestedId) : undefined;
+
+    if (requestedIdUrl && requestedIdUrl !== url) {
+      return { url, publicId: "" };
+    }
+
+    return { url, publicId: requestedId || previousByUrl.get(url) || "" };
+  });
+}
 
 const createProduct = async (req, res) => {
   try {
@@ -55,19 +78,21 @@ const createProduct = async (req, res) => {
       });
     }
 
+    const imageAssets = alignImageAssets(images, req.body.imagePublicIds);
+
     const product = await Product.create({
       name: name.trim(),
       slug: slug.toLowerCase().trim(),
       category,
       description: description || "",
-      images: Array.isArray(images) ? images : [],
+      images: imageAssets.map((asset) => asset.url),
+      imagePublicIds: imageAssets.map((asset) => asset.publicId),
       mrp,
       price,
       stock: stock || 0,
       sku: sku ? sku.trim() : undefined,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isRecentlyAdded: isRecentlyAdded === true,
-      isPinned: isPinned === true,
       isPinned: isPinned === true,
       recentlyAddedAt: isRecentlyAdded === true ? new Date() : null,
     });
@@ -151,6 +176,7 @@ const updateProduct = async (req, res) => {
       category,
       description,
       images,
+      imagePublicIds,
       mrp,
       price,
       stock,
@@ -168,6 +194,11 @@ const updateProduct = async (req, res) => {
         message: "Product not found",
       });
     }
+
+    const previousImageAssets = (product.images || []).map((url, index) => ({
+      url,
+      publicId: (product.imagePublicIds || [])[index] || "",
+    }));
 
     if (category !== undefined) {
       const categoryExists = await Category.findById(category);
@@ -194,8 +225,15 @@ const updateProduct = async (req, res) => {
       product.description = description;
     }
 
-    if (images !== undefined) {
-      product.images = Array.isArray(images) ? images : [];
+    if (images !== undefined || imagePublicIds !== undefined) {
+      const imageAssets = alignImageAssets(
+        images !== undefined ? images : product.images,
+        imagePublicIds !== undefined ? imagePublicIds : product.imagePublicIds,
+        product.images,
+        product.imagePublicIds
+      );
+      product.images = imageAssets.map((asset) => asset.url);
+      product.imagePublicIds = imageAssets.map((asset) => asset.publicId);
     }
 
     if (mrp !== undefined) {
@@ -260,6 +298,13 @@ const updateProduct = async (req, res) => {
 
     await product.save();
 
+    if (images !== undefined || imagePublicIds !== undefined) {
+      const currentIds = new Set(product.imagePublicIds || []);
+      await cleanupUnusedCloudinaryImages(
+        previousImageAssets.filter((asset) => !currentIds.has(asset.publicId))
+      );
+    }
+
     const updatedProduct = await Product.findById(product._id).populate(
       "category",
       "name slug"
@@ -307,7 +352,6 @@ const getRecentlyAdded = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-
     const product = await Product.findById(id);
 
     if (!product) {
@@ -317,18 +361,31 @@ const deleteProduct = async (req, res) => {
       });
     }
 
-    product.isAvailable = false;
+    const assets = (product.images || []).map((url, index) => ({
+      url,
+      publicId: (product.imagePublicIds || [])[index] || "",
+    }));
 
-    await product.save();
+    await Product.findByIdAndDelete(id);
+    const cleanup = await cleanupUnusedCloudinaryImages(assets);
 
-    res.json({
+    if (cleanup.failed.length || cleanup.missingPublicIds.length) {
+      return res.status(502).json({
+        success: false,
+        deleted: true,
+        message: "Product deleted, but required image cleanup was incomplete.",
+        cleanup,
+      });
+    }
+
+    return res.json({
       success: true,
-      message: "Product deleted successfully",
+      message: "Product permanently deleted",
+      cleanup,
     });
   } catch (error) {
     console.error("Delete product error:", error.message);
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to delete product",
     });

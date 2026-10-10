@@ -34,6 +34,13 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
+    imagePublicIds: [
+      {
+        type: String,
+        default: "",
+      },
+    ],
+
     mrp: {
       type: Number,
       required: true,

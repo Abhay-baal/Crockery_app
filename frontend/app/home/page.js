@@ -15,10 +15,12 @@ import SearchBar from "../../components/SearchBar";
 import ProductCard from "../../components/ProductCard";
 import DraggableMarquee from "../../components/DraggableMarquee";
 
+import PageShortcuts from "../../components/PageShortcuts";
 export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState("");
 
   const [recentPaused, setRecentPaused] = useState(false);
   const [recentHovered, setRecentHovered] = useState(false);
@@ -54,6 +56,18 @@ export default function HomePage() {
     loadHome();
   }, []);
 
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem("user");
+      if (!savedUser) return;
+
+      const user = JSON.parse(savedUser);
+      setUserName(user?.name || user?.fullName || "");
+    } catch (error) {
+      console.error("Unable to load user name:", error);
+    }
+  }, []);
+
   const recentProducts = products
     .filter((product) => product.isRecentlyAdded === true)
     .slice(0, 6);
@@ -78,12 +92,13 @@ export default function HomePage() {
             ===================================================== */}
         <section className="home-welcome">
           <p className="text-sm text-gray-400">
-            Welcome back
+            Welcome, {userName || "there"}
           </p>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">
-            Find something beautiful.
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">Home</h1>
+            <PageShortcuts />
+          </div>
 
           <div className="mt-5">
             <Suspense

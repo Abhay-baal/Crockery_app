@@ -20,3 +20,72 @@ build/
 *.key
 *.p12
 *.pfx
+
+# Local backups - do not commit
+*.bak
+*.backup
+*.cloudinary-backup
+*.before-safety-fix
+*.before-liked-products
+.backup-*/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+
+# Local backups
+*.bak
+*.backup
+*.cloudinary-backup
+*.before-safety-fix
+*.before-liked-products
+.backup-*/
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+service-account*.json
+
+# CROCKERY LOCAL SAFETY EXCLUSIONS
+# Local backups
+*.bak
+*.backup
+*.cloudinary-backup
+*.before-safety-fix
+*.before-liked-products
+.backup-*/
+**/.backup-*/
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+service-account*.json
+credentials.json
+
+# Additional generated/local backup filename patterns
+*.backup-*
+*.backup
+*.backup.*
+*.shortcuts-backup
+*.category-image-backup
+*.backup-fixed-*
+*.backup-mobile-*
+*.backup-remove-*
+
+# Local source-code backup copies
+*.category-image-backup
+*.shortcuts-backup
+*.backup-*
+*.backup.*

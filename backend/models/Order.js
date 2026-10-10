@@ -2,11 +2,24 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    orderId: { type: String, required: true, unique: true },
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
+    // Optional so existing legacy orders remain valid.
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+    },
+
     payload: {
       type: mongoose.Schema.Types.Mixed,
       required: true,
     },
+
     status: {
       type: String,
       enum: [
@@ -19,7 +32,11 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Pending",
     },
-    adminNote: { type: String, default: "" },
+
+    adminNote: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

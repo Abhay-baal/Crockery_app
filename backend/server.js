@@ -9,6 +9,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const accountRoutes = require("./routes/accountRoutes");
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/account", accountRoutes);
 
 /* Vercel serverless */
 if (process.env.NODE_ENV !== "production") {

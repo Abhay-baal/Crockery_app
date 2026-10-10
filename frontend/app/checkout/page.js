@@ -4,7 +4,7 @@ import api from "../../services/api";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, Lock } from "lucide-react";
+import { ArrowLeft, Check, Lock, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
@@ -17,22 +17,8 @@ export default function CheckoutPage() {
     clearCart,
   } = useCart();
 
-  const [checkingAuth] = useState(
-    () => typeof window !== "undefined" && !localStorage.getItem("token")
-  );
-  const [user, setUser] = useState(() => {
-    if (typeof window === "undefined") return null;
-
-    const savedUser = localStorage.getItem("user");
-
-    if (!savedUser) return null;
-
-    try {
-      return JSON.parse(savedUser);
-    } catch {
-      return null;
-    }
-  });
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [user, setUser] = useState(null);
 
   const [form, setForm] = useState({
     fullName: user?.name || "",
@@ -44,6 +30,12 @@ export default function CheckoutPage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [addressLoading, setAddressLoading] = useState(true);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [saveNewAddress, setSaveNewAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState({ label: "Home", recipientName: "", phone: "", house: "", street: "", landmark: "", city: "", state: "", pincode: "", isDefault: false });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -53,7 +45,71 @@ export default function CheckoutPage() {
       return;
     }
 
+    const savedUser = localStorage.getItem("user");
+
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        setForm((currentForm) => ({
+          ...currentForm,
+          fullName: parsedUser?.name || "",
+          phone: parsedUser?.phone || "",
+        }));
+      } catch {
+        localStorage.removeItem("user");
+      }
+    }
+
+    setCheckingAuth(false);
+
+    api.get("/account/addresses")
+      .then((response) => {
+        const savedAddresses = response.data.addresses || [];
+        setAddresses(savedAddresses);
+        const defaultAddress = savedAddresses.find((address) => address.isDefault) || savedAddresses[0];
+        if (defaultAddress) selectSavedAddress(defaultAddress);
+      })
+      .catch(() => {})
+      .finally(() => setAddressLoading(false));
   }, [router]);
+
+  useEffect(() => {
+    if (!addressModalOpen) return undefined;
+    const closeOnEscape = (event) => event.key === "Escape" && setAddressModalOpen(false);
+    document.addEventListener("keydown", closeOnEscape);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.body.style.overflow = ""; };
+  }, [addressModalOpen]);
+
+  function selectSavedAddress(address) {
+    setSelectedAddressId(address._id);
+    setForm((currentForm) => ({
+      ...currentForm,
+      fullName: address.recipientName,
+      phone: address.phone,
+      address: [address.house, address.street, address.landmark].filter(Boolean).join(", "),
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+    }));
+  }
+
+  const updateNewAddress = (event) => setNewAddress({ ...newAddress, [event.target.name]: event.target.value });
+
+  const saveCheckoutAddress = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await api.post("/account/addresses", newAddress);
+      const savedAddresses = response.data.addresses || [];
+      setAddresses(savedAddresses);
+      const created = response.data.address;
+      if (created) selectSavedAddress(created);
+      setAddressModalOpen(false);
+    } catch (error) {
+      window.alert(error.response?.data?.message || "Could not save this address.");
+    }
+  };
 
   const handleChange = (event) => {
     setForm({
@@ -67,29 +123,63 @@ export default function CheckoutPage() {
 
     setLoading(true);
 
+    const orderId = `CB-${Date.now()}`;
+
+    if (!form.fullName || !form.phone || !form.address || !form.city || !form.state || !/^\d{6}$/.test(form.pincode)) {
+      window.alert("Please complete your delivery address, including a valid 6-digit PIN code.");
+      return;
+    }
+
+    const selectedAddress = addresses.find((address) => address._id === selectedAddressId);
+    const addressSnapshot = selectedAddress
+      ? { ...selectedAddress }
+      : { ...form, recipientName: form.fullName, fullAddress: form.address };
     const order = {
-      id: `CB-${Date.now()}`,
+      id: orderId,
+      orderId,
       customer: user,
       items: cartItems,
       total: cartTotal,
       address: form,
+      addressSnapshot,
       status: "Pending",
       paymentStatus: "Pending",
       createdAt: new Date().toISOString(),
     };
 
     try {
-      await api.post("/orders", order);
+      if (saveNewAddress && !selectedAddress) {
+        await api.post("/account/addresses", { ...newAddress, recipientName: form.fullName, phone: form.phone, house: form.address, street: form.address, city: form.city, state: form.state, pincode: form.pincode });
+      }
+      const response = await api.post("/orders", order);
+
+      const savedOrder = response.data?.order;
+
+      localStorage.setItem(
+        "last-order",
+        JSON.stringify({
+          ...order,
+          orderId: response.data?.orderId || orderId,
+          _id: savedOrder?._id,
+        })
+      );
     } catch (error) {
       console.error("Order save failed:", error);
-      window.alert("Your order could not be saved. Please check your connection and try again.");
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.replace("/login?redirect=/checkout");
+        return;
+      }
+
+      window.alert(
+        error.response?.data?.message ||
+        "Your order could not be saved. Please check your connection and try again."
+      );
+      setLoading(false);
       return;
     }
-
-    localStorage.setItem(
-      "last-order",
-      JSON.stringify(order)
-    );
 
     clearCart();
 
@@ -179,6 +269,13 @@ export default function CheckoutPage() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium">Saved delivery addresses</p>
+                  <button type="button" onClick={() => setAddressModalOpen(true)} className="flex items-center gap-1 text-xs font-semibold text-stone-700"><Plus size={14} /> Add new</button>
+                </div>
+                {addressLoading ? <div className="h-16 animate-pulse rounded-xl bg-stone-100" /> : addresses.length > 0 && <div className="space-y-2">{addresses.map((address) => <button key={address._id} type="button" onClick={() => selectSavedAddress(address)} className={`w-full rounded-xl border p-3 text-left ${selectedAddressId === address._id ? "border-stone-900 bg-stone-50" : "border-stone-200"}`}><span className="flex items-center gap-2 text-sm font-semibold"><span className={`flex h-4 w-4 items-center justify-center rounded-full border ${selectedAddressId === address._id ? "border-stone-900" : "border-stone-300"}`}>{selectedAddressId === address._id && <Check size={11} />}</span>{address.label}{address.isDefault && <span className="text-xs font-normal text-stone-500">· Default</span>}</span><span className="mt-1 block pl-6 text-xs text-stone-500">{address.recipientName} · {address.city}, {address.state} - {address.pincode}</span></button>)}</div>}
+              </div>
+              <div className="sm:col-span-2">
                 <label className="text-sm font-medium">
                   Full name
                 </label>
@@ -264,6 +361,8 @@ export default function CheckoutPage() {
                   className="mt-2 w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none focus:border-stone-500"
                 />
               </div>
+
+              <label className="flex items-center gap-2 text-xs text-stone-500 sm:col-span-2"><input type="checkbox" checked={saveNewAddress} onChange={(event) => setSaveNewAddress(event.target.checked)} /> Save this custom address for next time</label>
             </div>
 
             <div className="mt-8 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
@@ -356,6 +455,8 @@ export default function CheckoutPage() {
           </aside>
         </div>
       </section>
+
+      {addressModalOpen && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 sm:items-center" onMouseDown={(event) => event.target === event.currentTarget && setAddressModalOpen(false)}><form onSubmit={saveCheckoutAddress} role="dialog" aria-modal="true" aria-labelledby="checkout-address-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6"><div className="flex items-center justify-between"><h2 id="checkout-address-title" className="text-lg font-semibold">Add New Address</h2><button type="button" onClick={() => setAddressModalOpen(false)} aria-label="Close address form" className="rounded-full p-2 text-stone-400 hover:bg-stone-100"><X size={18} /></button></div><div className="mt-5 grid gap-4 sm:grid-cols-2">{[["recipientName","Recipient name"],["phone","Phone number"],["house","House / building"],["street","Street / locality"],["landmark","Landmark (optional)"],["city","City"],["state","State"],["pincode","PIN code"]].map(([name,label]) => <label key={name} className="text-sm font-medium text-stone-700">{label}<input name={name} value={newAddress[name]} onChange={updateNewAddress} required={name !== "landmark"} maxLength={name === "pincode" ? 6 : undefined} className="mt-2 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm outline-none focus:border-stone-500" /></label>)}</div><div className="mt-6 flex gap-3"><button type="button" onClick={() => setAddressModalOpen(false)} className="flex-1 rounded-full border border-stone-200 px-4 py-3 text-sm">Cancel</button><button type="submit" className="flex-1 rounded-full bg-stone-900 px-4 py-3 text-sm font-semibold text-white">Save Address</button></div></form></div>}
     </main>
   );
 }

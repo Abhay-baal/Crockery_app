@@ -8,6 +8,7 @@ import BottomNav from "../../components/BottomNav";
 import SearchBar from "../../components/SearchBar";
 import ProductCard from "../../components/ProductCard";
 
+import PageShortcuts from "../../components/PageShortcuts";
 function ProductsPageContent() {
   const searchParams = useSearchParams();
 
@@ -85,9 +86,10 @@ function ProductsPageContent() {
             Catalogue
           </p>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
-            Products
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">Products</h1>
+            <PageShortcuts />
+          </div>
 
           <div className="mt-5">
             <SearchBar />

@@ -19,11 +19,19 @@ function getSavedCart() {
 }
 
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState(getSavedCart);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartHydrated, setCartHydrated] = useState(false);
 
   useEffect(() => {
+    setCartItems(getSavedCart());
+    setCartHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!cartHydrated) return;
+
     localStorage.setItem("crockery-cart", JSON.stringify(cartItems));
-  }, [cartItems]);
+  }, [cartHydrated, cartItems]);
 
   const addToCart = (product, quantity = 1) => {
     setCartItems((currentItems) => {

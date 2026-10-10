@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Minus, Plus, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Heart, Minus, Plus, ShoppingBag } from "lucide-react";
 import api from "@/services/api";
 import { useCart } from "@/context/CartContext";
 
@@ -12,6 +12,8 @@ export default function ProductPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [added, setAdded] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
 
   const { addToCart, cartCount } = useCart();
 
@@ -22,6 +24,10 @@ export default function ProductPage({ params }) {
         const response = await api.get(`/products/${id}`);
 
         setProduct(response.data.product);
+        if (localStorage.getItem("token")) {
+          const wishlistResponse = await api.get("/account/wishlist");
+          setLiked((wishlistResponse.data.products || []).some((item) => item._id === id));
+        }
       } catch (error) {
         console.error("Failed to load product:", error);
         setError("Product could not be loaded.");
@@ -40,6 +46,24 @@ export default function ProductPage({ params }) {
     setTimeout(() => {
       setAdded(false);
     }, 2000);
+  };
+
+  const toggleLike = async () => {
+    if (!localStorage.getItem("token")) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+    if (likeLoading) return;
+    setLikeLoading(true);
+    try {
+      if (liked) await api.delete(`/account/wishlist/${product._id}`);
+      else await api.post(`/account/wishlist/${product._id}`);
+      setLiked(!liked);
+    } catch (requestError) {
+      console.error("Wishlist update failed:", requestError);
+    } finally {
+      setLikeLoading(false);
+    }
   };
 
   if (loading) {
@@ -118,6 +142,8 @@ export default function ProductPage({ params }) {
             <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">
               {product.name}
             </h1>
+
+            <button type="button" onClick={toggleLike} disabled={likeLoading} aria-label={liked ? "Unlike product" : "Like product"} className="mt-4 flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-stone-700 disabled:opacity-50"><Heart size={17} fill={liked ? "currentColor" : "none"} /> {liked ? "Liked" : "Like product"}</button>
 
             <p className="mt-5 leading-7 text-stone-600">
               {product.description}

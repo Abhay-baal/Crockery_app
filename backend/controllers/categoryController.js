@@ -1,8 +1,10 @@
 const Category = require("../models/Category");
+const Product = require("../models/Product");
+const { cleanupUnusedCloudinaryImages } = require("../utils/cloudinaryImages");
 
 const createCategory = async (req, res) => {
   try {
-    const { name, slug, image, description } = req.body;
+    const { name, slug, image, imagePublicId, description } = req.body;
 
     if (!name || !slug) {
       return res.status(400).json({
@@ -29,6 +31,7 @@ const createCategory = async (req, res) => {
       name: name.trim(),
       slug: slug.toLowerCase().trim(),
       image: image || "",
+      imagePublicId: imagePublicId || "",
       description: description || "",
     });
 
@@ -70,7 +73,7 @@ const getCategories = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, slug, image, description, isActive } = req.body;
+    const { name, slug, image, imagePublicId, description, isActive } = req.body;
 
     const category = await Category.findById(id);
 
@@ -80,6 +83,11 @@ const updateCategory = async (req, res) => {
         message: "Category not found",
       });
     }
+
+    const previousImageAsset = {
+      url: category.image,
+      publicId: category.imagePublicId,
+    };
 
     if (name !== undefined) {
       category.name = name.trim();
@@ -93,6 +101,10 @@ const updateCategory = async (req, res) => {
       category.image = image;
     }
 
+    if (imagePublicId !== undefined) {
+      category.imagePublicId = imagePublicId;
+    }
+
     if (description !== undefined) {
       category.description = description;
     }
@@ -102,6 +114,10 @@ const updateCategory = async (req, res) => {
     }
 
     await category.save();
+
+    if (previousImageAsset.publicId !== category.imagePublicId) {
+      await cleanupUnusedCloudinaryImages([previousImageAsset]);
+    }
 
     res.json({
       success: true,
@@ -121,7 +137,7 @@ const updateCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-
+    const { confirmDependentProducts } = req.body || {};
     const category = await Category.findById(id);
 
     if (!category) {
@@ -131,18 +147,58 @@ const deleteCategory = async (req, res) => {
       });
     }
 
-    category.isActive = false;
+    const products = await Product.find({ category: id }).select(
+      "images imagePublicIds"
+    );
 
-    await category.save();
+    if (products.length > 0 && confirmDependentProducts !== true) {
+      return res.status(409).json({
+        success: false,
+        requiresConfirmation: true,
+        dependentProductCount: products.length,
+        message: `This category contains ${products.length} product${products.length === 1 ? "" : "s"}. Confirm permanent deletion of the category and all dependent products.`,
+      });
+    }
 
-    res.json({
+    const assets = [
+      {
+        url: category.image,
+        publicId: category.imagePublicId,
+      },
+      ...products.flatMap((product) =>
+        (product.images || []).map((url, index) => ({
+          url,
+          publicId: (product.imagePublicIds || [])[index] || "",
+        }))
+      ),
+    ];
+
+    // Remove dependent products and category from MongoDB.
+    await Product.deleteMany({ category: id });
+    await Category.findByIdAndDelete(id);
+
+    // Deletes only images no longer referenced by live records.
+    const cleanup = await cleanupUnusedCloudinaryImages(assets);
+
+    if (cleanup.failed.length || cleanup.missingPublicIds.length) {
+      return res.status(502).json({
+        success: false,
+        deleted: true,
+        deletedProducts: products.length,
+        message: "Category and products deleted, but required image cleanup was incomplete.",
+        cleanup,
+      });
+    }
+
+    return res.json({
       success: true,
-      message: "Category deleted successfully",
+      message: "Category permanently deleted",
+      deletedProducts: products.length,
+      cleanup,
     });
   } catch (error) {
     console.error("Delete category error:", error.message);
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to delete category",
     });

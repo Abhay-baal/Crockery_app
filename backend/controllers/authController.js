@@ -151,8 +151,39 @@ const getMe = async (req, res) => {
   }
 };
 
+const updateMe = async (req, res) => {
+  try {
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : undefined;
+    const phone = typeof req.body.phone === "string" ? req.body.phone.trim() : undefined;
+
+    if (!name || name.length > 100) {
+      return res.status(400).json({ success: false, message: "A valid name is required" });
+    }
+
+    if (phone && !/^[+\d][\d\s().-]{6,19}$/.test(phone)) {
+      return res.status(400).json({ success: false, message: "Enter a valid phone number" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: { name, phone: phone || "" } },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    return res.json({ success: true, message: "Profile updated", user });
+  } catch (error) {
+    console.error("Update me error:", error.message);
+    return res.status(500).json({ success: false, message: "Failed to update profile" });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  updateMe,
 };

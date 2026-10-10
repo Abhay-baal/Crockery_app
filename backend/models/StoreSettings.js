@@ -13,6 +13,7 @@ const storeSettingsSchema = new mongoose.Schema(
         "Discover quality bartan, crockery and everyday kitchen essentials at Magotra Bartan Store — bringing practical products and timeless style to your home.",
     },
     heroImage: { type: String, default: "" },
+    heroImagePublicId: { type: String, default: "" },
     primaryButton: { type: String, default: "Shop products" },
     secondaryButton: {
       type: String,

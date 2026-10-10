@@ -158,10 +158,6 @@ export default function HomePage() {
                   Recently Added
                 </h2>
 
-                <p className="mt-3 max-w-xl text-sm leading-6 text-gray-500">
-                  Fresh additions to our collection, selected for modern
-                  everyday living.
-                </p>
               </div>
 
               <button
@@ -296,10 +292,6 @@ export default function HomePage() {
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950 sm:text-4xl">
                 Shop by collection
               </h2>
-
-              <p className="mt-3 max-w-xl text-sm leading-6 text-gray-500">
-                Explore our collection of crockery and kitchen essentials.
-              </p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -493,7 +485,7 @@ export default function HomePage() {
         )}
 
         {/* Footer */}
-        <footer className="mt-10 bg-[#F4F4EF] text-gray-900">
+        <footer className="mt-10 border-t border-[#EAEAE4] bg-#FCFCFA text-gray-900">
           <div className="px-6 py-12 sm:px-10 sm:py-14">
 
             <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">

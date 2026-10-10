@@ -1,4 +1,6 @@
 const express = require("express");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 const jwt = require("jsonwebtoken");
 
 const protect = require("../middleware/authMiddleware");
@@ -7,14 +9,49 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const StoreSettings = require("../models/StoreSettings");
 const Order = require("../models/Order");
+const {
+  cleanupOrphanedCloudinaryImages,
+  cleanupUnusedCloudinaryImages,
+  registerCloudinaryUpload,
+} = require("../utils/cloudinaryImages");
 
 const router = express.Router();
+
+const cloudinaryConfigured = {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+};
+
+cloudinary.config(cloudinaryConfigured);
+
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+      "image/gif",
+    ];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error("Use a JPG, PNG, WEBP, AVIF or GIF image."));
+    }
+
+    cb(null, true);
+  },
+});
+
 
 const defaultSettings = {
   heroTitle: "Beautiful essentials for every kitchen.",
   heroDescription:
     "Discover quality bartan, crockery and everyday kitchen essentials at Magotra Bartan Store — bringing practical products and timeless style to your home.",
   heroImage: "",
+  heroImagePublicId: "",
   primaryButton: "Shop products",
   secondaryButton: "Explore collections",
 };
@@ -86,6 +123,79 @@ router.post("/login", async (req, res) => {
 });
 
 router.use(protect, adminOnly);
+
+router.post("/upload", (req, res) => {
+  imageUpload.single("image")(req, res, async (uploadError) => {
+    if (uploadError) {
+      return res.status(400).json({
+        success: false,
+        message: uploadError.code === "LIMIT_FILE_SIZE"
+          ? "Image must be 5 MB or smaller."
+          : uploadError.message || "Invalid image upload.",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please choose an image file.",
+      });
+    }
+
+    if (
+      !cloudinaryConfigured.cloud_name ||
+      !cloudinaryConfigured.api_key ||
+      !cloudinaryConfigured.api_secret
+    ) {
+      return res.status(503).json({
+        success: false,
+        message: "Cloudinary is not configured on the backend.",
+      });
+    }
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "crockery", resource_type: "image" },
+          (error, uploadedImage) => {
+            if (error) return reject(error);
+            resolve(uploadedImage);
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+
+      try {
+        await registerCloudinaryUpload({
+          url: result.secure_url,
+          publicId: result.public_id,
+        });
+      } catch (registryError) {
+        await cloudinary.uploader.destroy(result.public_id, {
+          resource_type: "image",
+        }).catch(() => {});
+        throw registryError;
+      }
+      cleanupOrphanedCloudinaryImages().catch((error) => {
+        console.error("Cloudinary orphan cleanup failed:", error.message);
+      });
+
+      return res.json({
+        success: true,
+        url: result.secure_url,
+        publicId: result.public_id,
+      });
+    } catch (error) {
+      console.error("Cloudinary upload failed:", error.message);
+      return res.status(502).json({
+        success: false,
+        message: "Could not upload image to Cloudinary.",
+      });
+    }
+  });
+});
+
 
 router.get("/dashboard", async (req, res) => {
   try {
@@ -169,6 +279,7 @@ router.put("/settings", async (req, res) => {
       "heroTitle",
       "heroDescription",
       "heroImage",
+      "heroImagePublicId",
       "primaryButton",
       "secondaryButton",
     ];
@@ -195,11 +306,21 @@ router.put("/settings", async (req, res) => {
       }
     }
 
+    const previousSettings = await StoreSettings.findOne({ key: "main" });
+    const previousHeroImage = {
+      url: previousSettings?.heroImage || "",
+      publicId: previousSettings?.heroImagePublicId || "",
+    };
+
     const settings = await StoreSettings.findOneAndUpdate(
       { key: "main" },
       { $set: updates, $setOnInsert: { key: "main" } },
       { new: true, upsert: true, runValidators: true }
     );
+
+    if (previousHeroImage.publicId !== settings.heroImagePublicId) {
+      await cleanupUnusedCloudinaryImages([previousHeroImage]);
+    }
 
     res.json({ success: true, settings });
   } catch (error) {

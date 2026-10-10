@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Heart, ShoppingBag } from "lucide-react";
 import api from "@/services/api";
 import { useCart } from "@/context/CartContext";
 
@@ -11,6 +11,8 @@ export default function CategoryPage({ params }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [likedIds, setLikedIds] = useState([]);
+  const [likeLoading, setLikeLoading] = useState("");
 
   const { cartCount } = useCart();
 
@@ -44,6 +46,10 @@ export default function CategoryPage({ params }) {
           );
 
         setProducts(filteredProducts);
+        if (localStorage.getItem("token")) {
+          const wishlistResponse = await api.get("/account/wishlist");
+          setLikedIds((wishlistResponse.data.products || []).map((product) => product._id));
+        }
       } catch (error) {
         console.error("Category error:", error);
         setError("Unable to load this category.");
@@ -54,6 +60,24 @@ export default function CategoryPage({ params }) {
 
     loadCategory();
   }, [params]);
+
+  async function toggleLike(event, productId) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!localStorage.getItem("token") || likeLoading) return;
+    setLikeLoading(productId);
+    try {
+      if (likedIds.includes(productId)) {
+        await api.delete(`/account/wishlist/${productId}`);
+        setLikedIds((current) => current.filter((id) => id !== productId));
+      } else {
+        await api.post(`/account/wishlist/${productId}`);
+        setLikedIds((current) => [...current, productId]);
+      }
+    } finally {
+      setLikeLoading("");
+    }
+  }
 
   if (loading) {
     return (
@@ -148,7 +172,8 @@ export default function CategoryPage({ params }) {
                     key={product._id}
                     className="group overflow-hidden rounded-2xl border border-stone-200 bg-white"
                   >
-                    <div className="flex aspect-square items-center justify-center overflow-hidden bg-stone-100 text-6xl">
+                    <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-stone-100 text-6xl">
+                      <button type="button" onClick={(event) => toggleLike(event, product._id)} aria-label={likedIds.includes(product._id) ? `Unlike ${product.name}` : `Like ${product.name}`} disabled={likeLoading === product._id} className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-stone-700 shadow-sm"><Heart size={17} fill={likedIds.includes(product._id) ? "currentColor" : "none"} /></button>
                       {product.images?.length > 0 ? (
                         <img
                           src={product.images[0]}
